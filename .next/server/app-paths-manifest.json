@@ -1,0 +1,7 @@
+{
+  "/api/cron/trigger/route": "app/api/cron/trigger/route.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/history/page": "app/history/page.js",
+  "/admin/cron/page": "app/admin/cron/page.js"
+}

@@ -1,0 +1,84 @@
+// Prisma schema for Finance Hot Agent
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // 开启 shadow database 支持，migrate 更安全
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ---------- 热点新闻 ----------
+// 唯一约束：同一来源 + 同一 URL 视为同一条，供 upsert 去重
+model HotNews {
+  id          String   @id @default(cuid())
+  title       String
+  url         String
+  source      String   // eastmoney / xueqiu / cls / sina ...
+  hotScore    Float    @default(0)
+  rank        Int      @default(0)
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+  date        String   // 2026-09-11 分区/索引友好
+
+  // 每日榜单摘要（一对多：一个 summary 对应多条新闻）
+  dailySummaryId String?
+  dailySummary   DailySummary? @relation(fields: [dailySummaryId], references: [id])
+
+  @@unique([source, url, date])
+  @@index([date, rank])
+  @@index([publishedAt])
+  @@map("hot_news")
+}
+
+// ---------- 每日 Top10 摘要（LLM 生成） ----------
+model DailySummary {
+  id        String   @id @default(cuid())
+  date      String   @unique // 一天一份
+  summary   String   // LLM 生成的当日概览
+  createdAt DateTime @default(now())
+
+  // 该摘要对应的新闻（一天多条的关联）
+  news      HotNews[]
+}
+
+// ---------- 调度配置（多时间点，可增删改） ----------
+model CronJob {
+  id        String   @id @default(cuid())
+  name      String   @default("default")
+  schedule  String   // "0 8 * * *"
+  timezone  String   @default("Asia/Shanghai")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- 抓取运行记录（可观测/排错） ----------
+model FetchRun {
+  id        String   @id @default(cuid())
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  status    String   @default("running") // running | success | partial | failed
+  source    String?  // 触发来源
+  message   String?  // 错误信息
+}
+
+// ---------- LangGraph Checkpoint（人机协同/断点恢复） ----------
+// 使用 langgraph-checkpoint-postgres 会自动建表，这里仅预留业务审计表
+model AgentRun {
+  id          String   @id @default(cuid())
+  threadId    String
+  status      String   @default("running")
+  startedAt   DateTime @default(now())
+  endedAt    DateTime?
+  input      Json?
+  output     Json?
+  error      String?
+
+  @@index([threadId])
+  @@index([startedAt])
+}

@@ -1,0 +1,41 @@
+{
+  "name": "finance-hot-agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "setup": "ts-node scripts/setup.ts",
+    "dev": "next dev",
+    "build": "prisma migrate deploy && prisma generate && next build",
+    "start": "next start",
+    "test": "node --test --require ts-node/register src/agent/nodes/dedup.test.ts src/agent/nodes/rank.test.ts src/agent/nodes/save.test.ts src/datasources/aggregator.test.ts",
+    "test:watch": "node --test --watch --require ts-node/register src/agent/nodes/dedup.test.ts src/agent/nodes/rank.test.ts src/agent/nodes/save.test.ts src/datasources/aggregator.test.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:studio": "prisma studio",
+    "cleanup": "ts-node -e \"require('./src/lib/cleanup').cleanupOldNews().then(console.log)\""
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.0.0",
+    "@langchain/langgraph": "^1.0.0",
+    "@langchain/langgraph-checkpoint-postgres": "^1.0.0",
+    "@langchain/openai": "^1.0.0",
+    "@prisma/client": "^5.22.0",
+    "next": "^15.0.0",
+    "node-cron": "^3.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "19.3.0",
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
+  }
+}
